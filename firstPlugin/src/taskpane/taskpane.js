@@ -15,10 +15,11 @@ Office.onReady((info) => {
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("run").onclick = run;
+    document.getElementById("run").onclick = run;
   }
 });
 
-export async function run() {
+async function run() {
   try {
     await Excel.run(async (context) => {
       var sheet = context.workbook.worksheets.getActiveWorksheet();
