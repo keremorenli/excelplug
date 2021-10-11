@@ -14,16 +14,15 @@ Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
-    document.getElementById("run").onclick = run;
-    document.getElementById("run").onclick = run;
+    document.getElementById("calculate").onclick = calculate;
   }
 });
 
-async function run() {
+async function calculate() {
   try {
     await Excel.run(async (context) => {
       var sheet = context.workbook.worksheets.getActiveWorksheet();
-      var range = sheet.getRange("A1:A2");
+      var range = sheet.getRange("A1:f20");
       range.format.fill.color = "red";
       await context.sync();
     });
@@ -31,24 +30,3 @@ async function run() {
     console.error(error);
   }
 }
-// export async function run() {
-//   try {
-//     await Excel.run(async (context) => {
-//       /**
-//        * Insert your Excel code here
-//        */
-//       const range = context.workbook.getSelectedRange();
-
-//       // Read the range address
-//       range.load("address");
-
-//       // Update the fill color
-//       range.format.fill.color = "yellow";
-
-//       await context.sync();
-//       console.log(`The range address was ${range.address}.`);
-//     });
-//   } catch (error) {
-//     console.error(error);
-//   }
-// }
