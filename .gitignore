@@ -1,2 +1,6 @@
 yedek/
+.idea/
 
+firstPlugin/node_modules
+firstPlugin/.azure-devops
+firstPlugin/.vscode
