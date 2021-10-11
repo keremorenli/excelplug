@@ -15,27 +15,39 @@ Office.onReady((info) => {
     document.getElementById("sideload-msg").style.display = "none";
     document.getElementById("app-body").style.display = "flex";
     document.getElementById("run").onclick = run;
+    // document.getElementById("command").onclick = runCommand();
   }
 });
 
-export async function run() {
-  try {
-    await Excel.run(async (context) => {
-      /**
-       * Insert your Excel code here
-       */
-      const range = context.workbook.getSelectedRange();
+// export async function run() {
+//   try {
+//     await Excel.run(async (context) => {
+//       /**
+//        * Insert your Excel code here
+//        */
+//       const range = context.workbook.getSelectedRange();
+//
+//       // Read the range address
+//       range.load("address");
+//
+//       // Update the fill color
+//       range.format.fill.color = "yellow";
+//
+//       await context.sync();
+//       console.log(`The range address was ${range.address}.`);
+//     });
+//   } catch (error) {
+//     console.error(error);
+//   }
+// }
 
-      // Read the range address
-      range.load("address");
-
-      // Update the fill color
-      range.format.fill.color = "yellow";
-
-      await context.sync();
-      console.log(`The range address was ${range.address}.`);
-    });
-  } catch (error) {
-    console.error(error);
-  }
-}
+// async function runCommand() {
+//   Excel.run (function (context) {
+//     var sheet = context.workbook.worksheets.getActiveWorksheet();
+//     var range = sheet.getRange("A1:A1")
+//     range.format.fill.color = "red"
+//
+//     return context.sync()
+//   })
+//   console.log("hello")
+// }
