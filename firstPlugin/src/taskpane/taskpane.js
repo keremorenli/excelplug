@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable prettier/prettier */
 /*
  * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
  * See LICENSE in the project root for license information.
@@ -18,15 +20,83 @@ Office.onReady((info) => {
   }
 });
 
-async function calculate() {
-  try {
-    await Excel.run(async (context) => {
-      var sheet = context.workbook.worksheets.getActiveWorksheet();
-      var range = sheet.getRange("A1:f20");
-      range.format.fill.color = "red";
-      await context.sync();
-    });
-  } catch (error) {
-    console.error(error);
+// FUNCTIONS
+function populateList(listId, arr) {
+  const list = document.getElementById(listId);
+  for (let i = 0; i <= arr.length - 1; i++) {
+    const li = document.createElement("li");
+    li.innerHTML = arr[i];
+    list.appendChild(li);
   }
 }
+
+function findIndex(arr, value) {
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] == value) {
+      return i
+    }
+  }
+  return -1
+}
+
+// console.log(findIndex(["a", "b", "c"], "f"));
+
+function findActivityTypes(columns_arr, data) {
+  let key_column_name = "WBSADI"; // ! bu kolon adına göre hareket edecek, önemli.
+  let index = findIndex(columns_arr, key_column_name);
+  const activityTypes = [];
+  for (let i = 0; i < data.length; i++) {
+    var wbsValue = data[i][index];
+    if (wbsValue == key_column_name) {
+      continue; // data'nın ilk satırı kolon başlıklarıysa elemek için.
+    }
+    var activityCode = wbsValue.slice(wbsValue.length-2, wbsValue.length);
+    if (findIndex(activityTypes, activityCode) == -1) {
+      activityTypes.push(activityCode);
+    } 
+  }
+  return activityTypes;
+}
+
+// CALCULATE BUTTON
+function calculate() {
+  Excel.run(function (context) {
+    var tableName = "data";
+    var table = context.workbook.tables.getItem(tableName);
+    var tableRange = table.getRange();
+    tableRange.load(["rowCount", "address", "values"]);
+    var columnsRow = tableRange.getRow(0);
+    columnsRow.load("values");;
+
+    return context.sync().then(
+      function () {
+        document.getElementById("tableRange").innerHTML = tableRange.address;
+
+        var countOfRows = tableRange.rowCount;
+        document.getElementById("number_of_rows").innerHTML = countOfRows;
+
+        document.getElementById("columns").innerHTML = "";
+        populateList("columns", columnsRow.values[0]);
+
+        var activityTypes = findActivityTypes(columnsRow.values[0], tableRange.values)
+        for (let i of activityTypes) {
+             
+        };
+        
+      }
+    ).then(context.sync);
+  })
+    .catch(function (error) {
+      console.log("Error: " + error);
+      // if (error instanceof OfficeExtension.Error) {
+      //     console.log("Debug info: " + JSON.stringify(error.debugInfo));
+      // }
+    });
+}
+
+// var table = document.getElementById("results_table");
+// var row = table.insertRow(2);
+// var cell1 = row.insertCell(0);
+// var cell2 = row.insertCell(1);
+// cell1.innerHTML = "new cell";
+// cell2.innerHTML = "new cell";
