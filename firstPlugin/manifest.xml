@@ -70,6 +70,22 @@
                     <SourceLocation resid="Pulltable.Url" />
                   </Action>
                 </Control>
+                <Control xsi:type="Button" id="realizedSections">
+                  <Label resid="realizedSectionsLabel" />
+                  <Supertip>
+                    <Title resid="realizedSectionsLabel" />
+                    <Description resid="realizedSectionsToolTip" />
+                </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16x16" />
+                    <bt:Image size="32" resid="Icon.32x32" />
+                    <bt:Image size="80" resid="Icon.80x80" />
+                  </Icon>
+                  <Action xsi:type="ShowTaskpane">
+                    <TaskpaneId>ButtonId3</TaskpaneId>
+                    <SourceLocation resid="realizedSections.Url" />
+                  </Action>
+                </Control>
               </Group>
             </OfficeTab>
           </ExtensionPoint>
@@ -87,17 +103,20 @@
         <bt:Url id="Commands.Url" DefaultValue="https://localhost:3000/commands.html" />
         <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html" />
         <bt:Url id="Pulltable.Url" DefaultValue="https://localhost:3000/pulltable.html" />
+        <bt:Url id="realizedSections.Url" DefaultValue="https://localhost:3000/realizedSections.html" /> 
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GetStarted.Title" DefaultValue="Get started with your sample add-in!" />
         <bt:String id="CommandsGroup.Label" DefaultValue="Commands Group" />
         <bt:String id="TaskpaneButton.Label" DefaultValue="Team Performance" />
         <bt:String id="PulltableButtonLabel" DefaultValue="Pull Table" />
+        <bt:String id="realizedSectionsLabel" DefaultValue="realizedSections" />
       </bt:ShortStrings>
       <bt:LongStrings>
         <bt:String id="GetStarted.Description" DefaultValue="Your sample add-in loaded succesfully. Go to the HOME tab and click the 'Show Taskpane' button to get started." />
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to Show a Taskpane" />
-        <bt:String id="PulltableButtonToolTip" DefaultValue="PulltableButtonToolTip" />
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to Show a Taskpane"/>
+        <bt:String id="PulltableButtonToolTip" DefaultValue="PulltableButtonToolTip"/>
+        <bt:String id="realizedSectionsToolTip" DefaultValue="realizedSectionsToolTip"/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

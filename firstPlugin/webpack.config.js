@@ -22,6 +22,7 @@ module.exports = async (env, options) => {
       taskpane: "./src/taskpane/taskpane.js",
       commands: "./src/commands/commands.js",
       pulltable: "./src/pulltable/pulltable.js",
+      realizedSections: "./src/realizedSections/realizedSections.js",
     },
     output: {
       devtoolModuleFilenameTemplate: "webpack:///[resource-path]?[loaders]",
@@ -66,6 +67,11 @@ module.exports = async (env, options) => {
         filename: "pulltable.html",
         template: "./src/pulltable/pulltable.html",
         chunks: ["polyfill", "pulltable"],
+      }),
+      new HtmlWebpackPlugin({
+        filename: "realizedSections.html",
+        template: "./src/realizedSections/realizedSections.html",
+        chunks: ["polyfill", "realizedSections"],
       }),
       new CopyWebpackPlugin({
         patterns: [
