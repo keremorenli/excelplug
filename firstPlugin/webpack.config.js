@@ -23,6 +23,7 @@ module.exports = async (env, options) => {
       commands: "./src/commands/commands.js",
       pulltable: "./src/pulltable/pulltable.js",
       realizedSections: "./src/realizedSections/realizedSections.js",
+      analyseSchedule: "./src/analyseSchedule/analyseSchedule.js",
     },
     output: {
       devtoolModuleFilenameTemplate: "webpack:///[resource-path]?[loaders]",
@@ -72,6 +73,11 @@ module.exports = async (env, options) => {
         filename: "realizedSections.html",
         template: "./src/realizedSections/realizedSections.html",
         chunks: ["polyfill", "realizedSections"],
+      }),
+      new HtmlWebpackPlugin({
+        filename: "analyseSchedule.html",
+        template: "./src/analyseSchedule/analyseSchedule.html",
+        chunks: ["polyfill", "analyseSchedule"],
       }),
       new CopyWebpackPlugin({
         patterns: [
