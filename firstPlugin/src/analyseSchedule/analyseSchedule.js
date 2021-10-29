@@ -17,29 +17,7 @@ function print(msg) {
 	document.getElementById("print").innerHTML = msg;
 };
 
-// elindeki tablo arrayler içinde tutuluyosa header array ile kolon isimlerini vererek objeler içinde tutulmasını sağlayabilirsin.  
-function convertArraysToObjectsInArray(data, header) {
-	var result = [];
-	for (const row of data) {
-		let obj = {}
-		for (let i = 0; i < row.length; i++) {
-			obj[header[i]] = row[i];
-		};
-		result.push(obj);
-	};
-	return result
-}
-
-// array içinde objeler ile oluşturulmuş bir tabloyu array içinde arrayler şeklinde düzenler. çıktı olarak iki elementli bi array verir. birincisi kolon başlıklarından oluşan bi array. ikincisi data.
-function convertObjectsToArraysInArray(data) {
-	let header = Object.keys(data[0]);
-	let arr = [];
-	for (let i of data) {
-		arr.push(Object.values(i));
-	}
-
-	return [header, arr]
-}
+import { convertArraysToObjectsInArray, convertObjectsToArraysInArray } from '../realizedSections/realizedSections.js';
 
 Office.onReady((info) => {
 	if (info.host === Office.HostType.Excel) {
@@ -48,187 +26,102 @@ Office.onReady((info) => {
 		document.getElementById("run-button").onclick = runData;
 	}
 });
-var newRealizedBody;
-var sheet_name = "ayiklanmis_gerceklesme";
+var exportedPlanBody;
 var resultData = [];
+const sheet_name = "exported_plan";
 function runData() {
-	Excel.run(async function (context) {
-		var realizedTableName = document.getElementById("realized-table-name").value;
-		var sectionsTableName = document.getElementById("sections-table-name").value;
-		var wbsCol = document.getElementById("wbs-column-name").value;
-		var dateCol = document.getElementById("date-column-name").value;
-		var startCol = document.getElementById("start-column-name").value;
-		var endCol = document.getElementById("end-column-name").value;
-		var lineCol = document.getElementById("line-column-name").value;
-		var idCol = document.getElementById("id-column-name").value;
-		var startSecCol = document.getElementById("startsec-column-name").value;
-		var endSecCol = document.getElementById("endsec-column-name").value;
-		var lineSecCol = document.getElementById("linesec-column-name").value;
+	Excel.run(function (context) {
+		const infoOneCol = document.getElementById("info-one").value;
+		const infoTwoCol = document.getElementById("info-two").value;
+		const startDateCol = document.getElementById("start-date").value;
+		const endDateCol = document.getElementById("end-date").value;
+		const amountCol = document.getElementById("amount").value;
 
-		var realizedTable = context.workbook.tables.getItem(realizedTableName);
-		var sectionsTable = context.workbook.tables.getItem(sectionsTableName);
+		const planTable = context.workbook.tables.getItem(document.getElementById("table-name").value);
+		const workDaysTable = context.workbook.tables.getItem("workDays");
 
-		var realizedHeader = realizedTable.getHeaderRowRange().load("values");
-		var sectionsHeader = sectionsTable.getHeaderRowRange().load("values");
-		var realizedBodyRange = realizedTable.getDataBodyRange().load("values");
-		var sectionsBodyRange = sectionsTable.getDataBodyRange().load("values");
+		const planHeader = planTable.getHeaderRowRange().load("values");
+		const planBodyRange = planTable.getDataBodyRange().load("values");
+		const workDaysHeader = workDaysTable.getHeaderRowRange().load("values");
+		const workDaysBodyRange = workDaysTable.getDataBodyRange().load("values");
 
 		return context.sync().then(function () {
-			var realizedHead = realizedHeader.values[0];
-			var sectionsHead = sectionsHeader.values[0];
-			var realizedData = realizedBodyRange.values; // ! arrays in array
-			var sectionsData = sectionsBodyRange.values; // ! arrays in array
-			realizedData = convertArraysToObjectsInArray(realizedData, realizedHead); // ! objects in array
-			sectionsData = convertArraysToObjectsInArray(sectionsData, sectionsHead).filter(i => i[startSecCol] >= 0 && i[endSecCol] > 0); // ! objects in array
-			// var sectionsStartKm = sectionsData.map(i => i[startSecCol]); // array
-			// var sectionsEndKm = sectionsData.map(i => i[endSecCol]); // array
-			// TODO eğer bi section son km'si X ise başka bi section ilk km'si de X olmalı. hepsi birbirine bağlanmalı. depo öyle olmadığı için patlıyodu. bi kontrol atabiliriz buraya
-			realizedData = realizedData.filter(i => i[startCol] >= 0 && i[endCol] > 0 && i[lineCol] !== "") // ! sadece km datası olanların gerekli kolonlarını çekelim.
+			var planHead = planHeader.values[0];
+			var workDaysHead = workDaysHeader.values[0];
+			var planData = planBodyRange.values; // * arrays in array
+			var workDaysData = workDaysBodyRange.values; // * arrays in array
+			planData = convertArraysToObjectsInArray(planData, planHead) // * objects in array
+				.filter(i => i[startDateCol] > 0 && i[endDateCol] > 0 && i[amountCol] > 0)
 				.map(i => {
 					return {
-						imalat: i[wbsCol],
-						tarih: i[dateCol],
-						bas_km: i[startCol],
-						bit_km: i[endCol],
-						hat: i[lineCol],
-						id: i["ID"]
+						info1: i[infoOneCol],
+						info2: i[infoTwoCol],
+						startDate: i[startDateCol],
+						endDate: i[endDateCol],
+						amount: i[amountCol],
 					}
-				});
-			// var resultData2 = [];
-			var flag;
-			for (let row of realizedData) {
-				flag = false;
-				for (let sec of sectionsData) {
-					let control1 = sec[startSecCol] <= row.bas_km;
-					let control2 = sec[startSecCol] <= row.bit_km;
-					let control3 = sec[endSecCol] >= row.bas_km;
-					let control4 = sec[endSecCol] >= row.bit_km;
-					let control5 = sec[lineSecCol] == row.hat;
-					if (control1 && control2 && control3 && control4 && control5) {
-						flag = true;
-						resultData.push({
-							imalat: row.imalat,
-							tarih: row.tarih,
-							bas_km: row.bas_km,
-							bit_km: row.bit_km,
-							bolge: sec[idCol],
-							id: row.id
-						})
-						// continue;
-					}
-					// else {
+				})
+			workDaysData = convertArraysToObjectsInArray(workDaysData, workDaysHead);
+			// console.log('workDaysData :', workDaysData);
+			// console.log('planData :', planData);
 
+			for (let row of planData) {
+				let days = [];
+				// console.log(row.startDate);
+				for (let i = row.startDate; i <= row.endDate; i++) {
+					if (workDaysData.filter(element => element.date == i)[0].work_day == 1) {
+						days.push(i);
+					};
 				}
-				// console.log('flag :', flag);
-				if (!flag) {
-					let smallerKm = Math.min(...[row.bas_km]);
-					let largerKm = Math.max(...[row.bit_km]);
-					for (let sec of sectionsData) {
-						let control1 = sec[startSecCol] <= smallerKm;
-						// console.log('smallerKm :', smallerKm);
-						// console.log('startSecCol :', startSecCol);
-						let control2 = sec[endSecCol] >= smallerKm;
-						let control3 = sec[lineSecCol] == row.hat;
-						// console.log(control1);
-						// console.log(control2);
-						// console.log(control3); 
-						// console.log("-------------------")
-						if (control1 && control2 && control3) {
-							var sectionKMsofSmallerKM = [sec[startSecCol], sec[endSecCol]];
-							var sectionofSmallerKM = sec[idCol];
-						}
-						let control4 = sec[startSecCol] <= largerKm;
-						let control5 = sec[endSecCol] >= largerKm;
-						// console.log(control4);
-						// console.log(control5);
-						// console.log(control3);
-						// console.log("-------------------")
-						if (control4 && control5 && control3) {
-							var sectionKMsofLargerKM = [sec[startSecCol], sec[endSecCol]];
-							var sectionofLargerKM = sec[idCol];
-						}
-					}
-
-					// console.log(' :', sectionKMsofSmallerKM);
-					// console.log(' :', sectionKMsofLargerKM);
+				let amountPerDay = Math.round(row.amount / days.length * 10) / 10;
+				for (let day of days) {
 					resultData.push({
-						imalat: row.imalat,
-						tarih: row.tarih,
-						bas_km: Math.min(row.bas_km, row.bit_km),
-						bit_km: sectionKMsofSmallerKM[1],
-						bolge: sectionofSmallerKM,
-						id: row.id
-					});
-					resultData.push({
-						imalat: row.imalat,
-						tarih: row.tarih,
-						bas_km: Math.max(row.bas_km, row.bit_km),
-						bit_km: sectionKMsofLargerKM[1],
-						bolge: sectionofLargerKM,
-						id: row.id
-					});
+						info1: row.info1,
+						info2: row.info2,
+						date: day,
+						amount: amountPerDay
+					})
 				}
-			}
-			// console.log(convertObjectsToArraysInArray(resultData));
+			};
 			resultData = convertObjectsToArraysInArray(resultData);
-			// ! verimizi oluşturduk şimdi excelde bir tabloya yazalım.
-
-			// try {
-			// 	let sheets = context.workbook.worksheets;
-			// 	sheet = sheets.add(sheet_name);
-			// 	sheet.load("name, position");
-
-			// } catch {
-
-			// }
-			var sheets = context.workbook.worksheets;
+			var sheets = context.workbook.worksheets; 
 			sheets.load("items/name");
-			// var sheets = context.workbook.worksheets;
-			// var sheet = sheets.add(sheet_name);
-			// sheet.load("name, position");
-
 			return context.sync().then(function () {
-				var delete_flag = false;
-				for (let i of sheets.items) {
-					if (i.name == sheet_name) {
-						delete_flag = true;
-					}
-				}
-				if (delete_flag) {
-					let sheet = context.workbook.worksheets.getItem(sheet_name);
-					sheet.delete();
-				}
+				// var delete_flag = false;
+				// for (let i of sheets.items) {
+				// 	if (i.name == sheet_name) {
+				// 		delete_flag = true;
+				// 	}
+				// }
+				// if (delete_flag) {
+				// 	let sheet = context.workbook.worksheets.getItem(sheet_name);
+				// 	sheet.delete();
+				// }
 				var new_sheet = sheets.add(sheet_name);
-				new_sheet.load("name, position");
 				new_sheet.activate();
-				var new_realized = new_sheet.tables.add("A1:F1", true /*hasHeaders*/);
-				new_realized.name = "new_realized";
-				new_realized.getHeaderRowRange().values = [resultData[0]];
-				new_realized.rows.add(null /*add rows to the end of the table*/, resultData[1]);
-				new_realized.columns.getItemAt(1).getDataBodyRange().numberFormat = "dd.mm.yyyy"
-				new_realized.columns.getItemAt(2).getDataBodyRange().numberFormat = "0+000"
-				new_realized.columns.getItemAt(3).getDataBodyRange().numberFormat = "0+000"
-				// 
-				newRealizedBody = new_realized.getDataBodyRange();
-				newRealizedBody.load("rowCount");
+				var exportedPlan = new_sheet.tables.add("A1:D1", true /*hasHeaders*/);
+				exportedPlan.name = "exportedPlan";
+				exportedPlan.getHeaderRowRange().values = [resultData[0]];
+				exportedPlan.rows.add(null, resultData[1]);
+				exportedPlan.columns.getItemAt(2).getDataBodyRange().numberFormat = "dd.mm.yyyy"
+				exportedPlanBody = exportedPlan.getDataBodyRange();
+				exportedPlanBody.load("rowCount");
 				return context.sync().then(function () {
-					let mesafeData = [];
-					let imalatKodData = []; 
-					for (let i = 1; i <= newRealizedBody.rowCount+1; i++) {
-						mesafeData.push(["=+ABS([@[bit_km]]-[@[bas_km]])"]);
-						imalatKodData.push(["=TEXT(RIGHT([@[imalat]],2),\"#\")"])
+					let imalat = []; 
+					for (let i = 1; i <= exportedPlanBody.rowCount+1; i++) {
+						// imalat.push(["=XLOOKUP(RIGHT([@[info1]],2);imalatlar[Kod_str];İmalatlar[İsim])"]) // ! wbs info1 olmalı 
+						imalat.push([""]) // ! wbs info1 olmalı 
 					}
-					new_realized.columns.add(-1, mesafeData, "mesafe");
-					new_realized.columns.add(-1, imalatKodData, "imalatKod");
+					console.log(imalat);
+					exportedPlan.columns.add(-1, imalat, "imalat");
 					new_sheet.getUsedRange().format.autofitColumns();
 				})
 			})
 		})
-	})
-		.catch(function (error) {
-			console.log("Error: " + error.debugInfo);
-			// if (error instanceof OfficeExtension.Error) {
-			//     console.log("Debug info: " + JSON.stringify(error.debugInfo));
-			// }
-		});
+	}).catch(function (error) {
+		console.log("Error: " + error.debugInfo);
+		// if (error instanceof OfficeExtension.Error) {
+		//     console.log("Debug info: " + JSON.stringify(error.debugInfo));
+		// }
+	});
 }

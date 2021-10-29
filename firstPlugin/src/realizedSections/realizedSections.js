@@ -18,7 +18,7 @@ function print(msg) {
 };
 
 // elindeki tablo arrayler içinde tutuluyosa header array ile kolon isimlerini vererek objeler içinde tutulmasını sağlayabilirsin.  
-function convertArraysToObjectsInArray(data, header) {
+export function convertArraysToObjectsInArray(data, header) {
 	var result = [];
 	for (const row of data) {
 		let obj = {}
@@ -31,7 +31,7 @@ function convertArraysToObjectsInArray(data, header) {
 }
 
 // array içinde objeler ile oluşturulmuş bir tabloyu array içinde arrayler şeklinde düzenler. çıktı olarak iki elementli bi array verir. birincisi kolon başlıklarından oluşan bi array. ikincisi data.
-function convertObjectsToArraysInArray(data) {
+export function convertObjectsToArraysInArray(data) {
 	let header = Object.keys(data[0]);
 	let arr = [];
 	for (let i of data) {
@@ -171,6 +171,13 @@ function runData() {
 			}
 			// console.log(convertObjectsToArraysInArray(resultData));
 			resultData = convertObjectsToArraysInArray(resultData);
+			for (let i of resultData[1]) {
+				i.push("=+ABS([@[bit_km]]-[@[bas_km]])");
+				i.push("=TEXT(RIGHT([@[imalat]],2),\"#\")")
+			}
+			resultData[0].push("mesafeData");
+			resultData[0].push("imalatKodData");
+			console.log(resultData);
 			// ! verimizi oluşturduk şimdi excelde bir tabloya yazalım.
 
 			// try {
@@ -189,38 +196,51 @@ function runData() {
 
 			return context.sync().then(function () {
 				var delete_flag = false;
+				var new_realized;
+				var new_sheet;
 				for (let i of sheets.items) {
 					if (i.name == sheet_name) {
 						delete_flag = true;
 					}
 				}
 				if (delete_flag) {
-					let sheet = context.workbook.worksheets.getItem(sheet_name);
-					sheet.delete();
+					new_realized = context.workbook.tables.getItem("new_realized");
+					// new_realized.columns.getItem("imalatKod").delete();
+					// new_realized.columns.getItem("mesafe").delete();
+					new_realized.getDataBodyRange().clear();
+					new_sheet = context.workbook.worksheets.getItem(sheet_name);
+					// new_realized.rows.add(0, resultData[1]); 
+				} else {
+					new_sheet = sheets.add(sheet_name);
+					new_realized = new_sheet.tables.add("A1:H1", true /*hasHeaders*/);
+					new_realized.name = "new_realized";
+					new_realized.getHeaderRowRange().values = [resultData[0]];
 				}
-				var new_sheet = sheets.add(sheet_name);
-				new_sheet.load("name, position");
-				new_sheet.activate();
-				var new_realized = new_sheet.tables.add("A1:F1", true /*hasHeaders*/);
-				new_realized.name = "new_realized";
-				new_realized.getHeaderRowRange().values = [resultData[0]];
-				new_realized.rows.add(null /*add rows to the end of the table*/, resultData[1]);
+				new_realized.rows.add(0, resultData[1]);
 				new_realized.columns.getItemAt(1).getDataBodyRange().numberFormat = "dd.mm.yyyy"
 				new_realized.columns.getItemAt(2).getDataBodyRange().numberFormat = "0+000"
 				new_realized.columns.getItemAt(3).getDataBodyRange().numberFormat = "0+000"
+				new_sheet.activate();
 				// 
-				newRealizedBody = new_realized.getDataBodyRange();
-				newRealizedBody.load("rowCount");
+				// newRealizedBody = new_realized.getDataBodyRange();
+				// newRealizedBody.load("rowCount");
 				return context.sync().then(function () {
-					let mesafeData = [];
-					let imalatKodData = []; 
-					for (let i = 1; i <= newRealizedBody.rowCount+1; i++) {
-						mesafeData.push(["=+ABS([@[bit_km]]-[@[bas_km]])"]);
-						imalatKodData.push(["=TEXT(RIGHT([@[imalat]],2),\"#\")"])
-					}
-					new_realized.columns.add(-1, mesafeData, "mesafe");
-					new_realized.columns.add(-1, imalatKodData, "imalatKod");
-					new_sheet.getUsedRange().format.autofitColumns();
+					// let mesafeData = [];
+					// let imalatKodData = [];
+					// for (let i = 1; i <= newRealizedBody.rowCount + 1; i++) {
+					// 	mesafeData.push(["=+ABS([@[bit_km]]-[@[bas_km]])"]);
+					// 	imalatKodData.push(["=TEXT(RIGHT([@[imalat]],2),\"#\")"])
+					// }
+					// if (delete_flag) {
+					// 	new_realized.columns.getItem("mesafe").getDataBodyRange().values = mesafeData;
+					// 	new_realized.columns.getItem("imalatKod").getDataBodyRange().values = imalatKodData;
+					// } else {
+					// 	new_realized.columns.add(-1, mesafeData, "mesafe");
+					// 	new_realized.columns.add(-1, imalatKodData, "imalatKod")
+					// };
+					// new_sheet.getUsedRange().format.autofitColumns();
+					// // eslint-disable-next-line no-undef
+					location.reload();
 				})
 			})
 		})
