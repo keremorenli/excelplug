@@ -205,11 +205,9 @@ function runData() {
 				}
 				if (delete_flag) {
 					new_realized = context.workbook.tables.getItem("new_realized");
-					// new_realized.columns.getItem("imalatKod").delete();
-					// new_realized.columns.getItem("mesafe").delete();
 					new_realized.getDataBodyRange().clear();
+					new_realized.clearFilters();
 					new_sheet = context.workbook.worksheets.getItem(sheet_name);
-					// new_realized.rows.add(0, resultData[1]); 
 				} else {
 					new_sheet = sheets.add(sheet_name);
 					new_realized = new_sheet.tables.add("A1:H1", true /*hasHeaders*/);
@@ -238,7 +236,7 @@ function runData() {
 					// 	new_realized.columns.add(-1, mesafeData, "mesafe");
 					// 	new_realized.columns.add(-1, imalatKodData, "imalatKod")
 					// };
-					// new_sheet.getUsedRange().format.autofitColumns();
+					new_sheet.getUsedRange().format.autofitColumns();
 					// // eslint-disable-next-line no-undef
 					location.reload();
 				})

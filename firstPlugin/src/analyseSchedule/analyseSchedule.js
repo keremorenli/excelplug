@@ -84,37 +84,41 @@ function runData() {
 				}
 			};
 			resultData = convertObjectsToArraysInArray(resultData);
-			var sheets = context.workbook.worksheets; 
+			for (let i of resultData[1]) {
+				i.push("=+XLOOKUP(RIGHT([@info1],2),imalatlar[Kod_str],imalatlar[İsim])");
+			}
+			resultData[0].push("imalat");
+			var sheets = context.workbook.worksheets;
 			sheets.load("items/name");
 			return context.sync().then(function () {
-				// var delete_flag = false;
-				// for (let i of sheets.items) {
-				// 	if (i.name == sheet_name) {
-				// 		delete_flag = true;
-				// 	}
-				// }
-				// if (delete_flag) {
-				// 	let sheet = context.workbook.worksheets.getItem(sheet_name);
-				// 	sheet.delete();
-				// }
-				var new_sheet = sheets.add(sheet_name);
-				new_sheet.activate();
-				var exportedPlan = new_sheet.tables.add("A1:D1", true /*hasHeaders*/);
-				exportedPlan.name = "exportedPlan";
-				exportedPlan.getHeaderRowRange().values = [resultData[0]];
-				exportedPlan.rows.add(null, resultData[1]);
-				exportedPlan.columns.getItemAt(2).getDataBodyRange().numberFormat = "dd.mm.yyyy"
-				exportedPlanBody = exportedPlan.getDataBodyRange();
-				exportedPlanBody.load("rowCount");
-				return context.sync().then(function () {
-					let imalat = []; 
-					for (let i = 1; i <= exportedPlanBody.rowCount+1; i++) {
-						// imalat.push(["=XLOOKUP(RIGHT([@[info1]],2);imalatlar[Kod_str];İmalatlar[İsim])"]) // ! wbs info1 olmalı 
-						imalat.push([""]) // ! wbs info1 olmalı 
+				var delete_flag = false;
+				var exportedPlan;
+				var new_sheet;
+				for (let i of sheets.items) {
+					if (i.name == sheet_name) {
+						delete_flag = true;
 					}
-					console.log(imalat);
-					exportedPlan.columns.add(-1, imalat, "imalat");
-					new_sheet.getUsedRange().format.autofitColumns();
+				}
+				if (delete_flag) {
+					exportedPlan = context.workbook.tables.getItem("exportedPlan");
+					exportedPlan.getDataBodyRange().clear();
+					exportedPlan.clearFilters();
+					new_sheet = context.workbook.worksheets.getItem(sheet_name);
+				} else {
+					new_sheet = sheets.add(sheet_name);
+					exportedPlan = new_sheet.tables.add("A1:E1", true /*hasHeaders*/);
+					exportedPlan.name = "exportedPlan";
+					exportedPlan.getHeaderRowRange().values = [resultData[0]];
+				}
+				new_sheet.activate();
+				exportedPlan.rows.add(0, resultData[1]);
+				exportedPlan.columns.getItemAt(2).getDataBodyRange().numberFormat = "dd.mm.yyyy"
+				return context.sync().then(function () {
+					new_sheet.getUsedRange().format.autofitColumns()
+					location.reload();
+
+					// * ikinci üretilecek sayfaya girişiyorum. önce data. 
+					
 				})
 			})
 		})
