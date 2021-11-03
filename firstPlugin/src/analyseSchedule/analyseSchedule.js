@@ -18,6 +18,9 @@ function print(msg) {
 };
 
 import { convertArraysToObjectsInArray, convertObjectsToArraysInArray } from '../realizedSections/realizedSections.js';
+function onlyUnique(value, index, self) {
+	return self.indexOf(value) === index;
+}
 
 Office.onReady((info) => {
 	if (info.host === Office.HostType.Excel) {
@@ -27,7 +30,9 @@ Office.onReady((info) => {
 	}
 });
 var exportedPlanBody;
-var resultData = [];
+var resultDataRaw = [];
+var resultDataRaw2 = [];
+var resultData;
 const sheet_name = "exported_plan";
 function runData() {
 	Excel.run(function (context) {
@@ -36,6 +41,9 @@ function runData() {
 		const startDateCol = document.getElementById("start-date").value;
 		const endDateCol = document.getElementById("end-date").value;
 		const amountCol = document.getElementById("amount").value;
+		const wbsCol = document.getElementById("wbs-column-name").value;
+		const dateCol = document.getElementById("date-column-name").value;
+		const progressCol = document.getElementById("progress-column-name").value;
 
 		const planTable = context.workbook.tables.getItem(document.getElementById("table-name").value);
 		const workDaysTable = context.workbook.tables.getItem("workDays");
@@ -75,7 +83,7 @@ function runData() {
 				}
 				let amountPerDay = Math.round(row.amount / days.length * 10) / 10;
 				for (let day of days) {
-					resultData.push({
+					resultDataRaw.push({
 						info1: row.info1,
 						info2: row.info2,
 						date: day,
@@ -83,7 +91,7 @@ function runData() {
 					})
 				}
 			};
-			resultData = convertObjectsToArraysInArray(resultData);
+			resultData = convertObjectsToArraysInArray(resultDataRaw);
 			for (let i of resultData[1]) {
 				i.push("=+XLOOKUP(RIGHT([@info1],2),imalatlar[Kod_str],imalatlar[İsim])");
 			}
@@ -115,10 +123,71 @@ function runData() {
 				exportedPlan.columns.getItemAt(2).getDataBodyRange().numberFormat = "dd.mm.yyyy"
 				return context.sync().then(function () {
 					new_sheet.getUsedRange().format.autofitColumns()
-					location.reload();
 
 					// * ikinci üretilecek sayfaya girişiyorum. önce data. 
-					
+					var realizedTable = context.workbook.tables.getItem("realized");
+					var realizedHeader = realizedTable.getHeaderRowRange().load("values");
+					var realizedBodyRange = realizedTable.getDataBodyRange().load("values");
+					sheets = context.workbook.worksheets;
+					sheets.load("items/name");
+					return context.sync().then(function () {
+						var realizedHead = realizedHeader.values[0];
+						var realizedData = realizedBodyRange.values; // * arrays in array
+						realizedData = convertArraysToObjectsInArray(realizedData, realizedHead) // * objects in array
+							.map(i => {
+								return {
+									wbs: i[wbsCol],
+									tarih: i[dateCol],
+									ilerleme: i[progressCol],
+								}
+							})
+							.filter(data => data.tarih < 44478); // ! REV TARIHI GIRILMELI
+						const realDataDates = realizedData.map(i => i.tarih);
+						const realDataWBS = realizedData.map(i => i.wbs).filter(onlyUnique);
+						for (let d = Math.min(...realDataDates); d <= Math.max(...realDataDates); d++) {
+							for (let element of realDataWBS) {
+								resultDataRaw.push({
+									info1: element,
+									info2: "",
+									date: d,
+									amount: realizedData.filter(el => el.wbs == element && el.tarih == d)
+										.reduce((sum, item) => sum + Number(item.ilerleme), 0)
+								})
+							}
+						}
+						var consolidatedData = convertObjectsToArraysInArray(resultDataRaw.filter(i => i.amount > 0));
+						for (let i of consolidatedData[1]) {
+							i.push("=+XLOOKUP(RIGHT([@info1],2),imalatlar[Kod_str],imalatlar[İsim])");
+						}
+						consolidatedData[0].push("imalat");
+						var exist_flag = false;
+						var consolidated;
+						var consolidatedExport;
+						var consolidatedSheet;
+						var consolidatedSheetName = "consolidatedExport";
+						for (let i of sheets.items) {
+							if (i.name == consolidatedSheetName) {
+								exist_flag = true;
+							}
+						}
+						if (exist_flag) {
+							consolidatedExport = context.workbook.tables.getItem(consolidatedSheetName);
+							consolidatedExport.getDataBodyRange().clear();
+							consolidatedExport.clearFilters();
+							consolidatedSheet = context.workbook.worksheets.getItem(consolidatedSheetName);
+						} else {
+							consolidatedSheet = sheets.add(consolidatedSheetName);
+							consolidatedExport = consolidatedSheet.tables.add("A1:E1", true /*hasHeaders*/);
+							consolidatedExport.name = consolidatedSheetName;
+							consolidatedExport.getHeaderRowRange().values = [consolidatedData[0]];
+						}
+						consolidatedExport.rows.add(0, consolidatedData[1]);
+						consolidatedExport.columns.getItemAt(2).getDataBodyRange().numberFormat = "dd.mm.yyyy"
+						consolidatedSheet.activate();
+						consolidatedSheet.getUsedRange().format.autofitColumns();
+						// eslint-disable-next-line no-undef
+						location.reload();
+					})
 				})
 			})
 		})

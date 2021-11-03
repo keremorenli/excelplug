@@ -237,7 +237,7 @@ function runData() {
 					// 	new_realized.columns.add(-1, imalatKodData, "imalatKod")
 					// };
 					new_sheet.getUsedRange().format.autofitColumns();
-					// // eslint-disable-next-line no-undef
+					// eslint-disable-next-line no-undef
 					location.reload();
 				})
 			})
