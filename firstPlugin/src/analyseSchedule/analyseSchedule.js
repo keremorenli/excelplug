@@ -72,15 +72,25 @@ function runData() {
 			workDaysData = convertArraysToObjectsInArray(workDaysData, workDaysHead);
 			// console.log('workDaysData :', workDaysData);
 			// console.log('planData :', planData);
-
+			// var control = 0;
 			for (let row of planData) {
 				let days = [];
 				// console.log(row.startDate);
+				var flagg = true;
 				for (let i = row.startDate; i <= row.endDate; i++) {
+					// console.log(row);
+					// console.log(i);
+					// console.log(workDaysData.filter(element => element.date == i));
 					if (workDaysData.filter(element => element.date == i)[0].work_day == 1) {
 						days.push(i);
+						flagg = false;
 					};
 				}
+				if (flagg) {
+					console.log(row); // TODO planlama tarihleri tamamen tatil günlere denk geliyorsa patlıyor
+				}
+				// control++;
+				// console.log('control :', control);
 				let amountPerDay = Math.round(row.amount / days.length * 10) / 10;
 				for (let day of days) {
 					resultDataRaw.push({
@@ -109,7 +119,7 @@ function runData() {
 				}
 				if (delete_flag) {
 					exportedPlan = context.workbook.tables.getItem("exportedPlan");
-					exportedPlan.getDataBodyRange().clear();
+					exportedPlan.getDataBodyRange().clear(); // TODO iyi çalışmıyor gibi duruyor. önce mevcut datayı boşaltıp runlayınca doğru sonuç geliyor. 
 					exportedPlan.clearFilters();
 					new_sheet = context.workbook.worksheets.getItem(sheet_name);
 				} else {
